@@ -1,1 +1,68 @@
-{"success":true,"results":10,"total":74,"more":false,"offset":0,"hits":[{"path":"/home/groups/screens/screens-devices-master","excerpt":"","name":"screens-devices-master","title":"screens-devices-master","created":"2022-05-02 16:47:00"},{"path":"/home/groups/screens/screens-administrators","excerpt":"","name":"screens-administrators","title":"screens-administrators","created":"2022-05-02 16:47:00"},{"path":"/home/groups/screens/we-retail/screens-we-retail-administrators","excerpt":"","name":"screens-we-retail-administrators","title":"screens-we-retail-administrators","created":"2022-05-02 16:47:08"},{"path":"/home/groups/screens/we-retail/screens-we-retail-devices","excerpt":"","name":"screens-we-retail-devices","title":"screens-we-retail-devices","created":"2022-05-02 16:47:08"},{"path":"/home/groups/screens/PtyAEZ8sdfDBexGUJuu7","excerpt":"","name":"PtyAEZ8sdfDBexGUJuu7","title":"PtyAEZ8sdfDBexGUJuu7","created":"2022-08-03 14:02:30"},{"path":"/home/groups/a/analytics-administrators","excerpt":"","name":"analytics-administrators","title":"analytics-administrators","created":"2022-05-02 16:45:47"},{"path":"/home/groups/a/af-template-script-writers","excerpt":"","name":"af-template-script-writers","title":"af-template-script-writers","created":"2022-05-02 16:44:59"},{"path":"/home/groups/a/administrators","excerpt":"","name":"administrators","title":"administrators","created":"2022-05-02 16:44:31"},{"path":"/home/groups/projects/admin/we_retail/q27c7e1tHiWy8BeqoIYJ","excerpt":"","name":"q27c7e1tHiWy8BeqoIYJ","title":"q27c7e1tHiWy8BeqoIYJ","created":"2022-05-02 16:49:01"},{"path":"/home/groups/projects/admin/we_retail/O_LY03w9YjQvgikeLaWw","excerpt":"","name":"O_LY03w9YjQvgikeLaWw","title":"We.Retail","created":"2022-05-02 16:49:01"}]}
+{
+	"success": true,
+	"results": 10,
+	"total": 74,
+	"more": false,
+	"offset": 0,
+	"hits": [{
+		"path": "/home/groups/screens/screens-devices-master",
+		"excerpt": "",
+		"name": "screens-devices-master",
+		"title": "screens-devices-master",
+		"created": "2022-05-02 16:47:00"
+	}, {
+		"path": "/home/groups/screens/screens-administrators",
+		"excerpt": "",
+		"name": "screens-administrators",
+		"title": "screens-administrators",
+		"created": "2022-05-02 16:47:00"
+	}, {
+		"path": "/home/groups/screens/we-retail/screens-we-retail-administrators",
+		"excerpt": "",
+		"name": "screens-we-retail-administrators",
+		"title": "screens-we-retail-administrators",
+		"created": "2022-05-02 16:47:08"
+	}, {
+		"path": "/home/groups/screens/we-retail/screens-we-retail-devices",
+		"excerpt": "",
+		"name": "screens-we-retail-devices",
+		"title": "screens-we-retail-devices",
+		"created": "2022-05-02 16:47:08"
+	}, {
+		"path": "/home/groups/screens/PtyAEZ8sdfDBexGUJuu7",
+		"excerpt": "",
+		"name": "PtyAEZ8sdfDBexGUJuu7",
+		"title": "PtyAEZ8sdfDBexGUJuu7",
+		"created": "2022-08-03 14:02:30"
+	}, {
+		"path": "/home/groups/a/analytics-administrators",
+		"excerpt": "",
+		"name": "analytics-administrators",
+		"title": "analytics-administrators",
+		"created": "2022-05-02 16:45:47"
+	}, {
+		"path": "/home/groups/a/af-template-script-writers",
+		"excerpt": "",
+		"name": "af-template-script-writers",
+		"title": "af-template-script-writers",
+		"created": "2022-05-02 16:44:59"
+	}, {
+		"path": "/home/groups/a/administrators",
+		"excerpt": "",
+		"name": "administrators",
+		"title": "administrators",
+		"created": "2022-05-02 16:44:31"
+	}, {
+		"path": "/home/groups/projects/admin/we_retail/q27c7e1tHiWy8BeqoIYJ",
+		"excerpt": "",
+		"name": "q27c7e1tHiWy8BeqoIYJ",
+		"title": "q27c7e1tHiWy8BeqoIYJ",
+		"created": "2022-05-02 16:49:01"
+	}, {
+		"path": "/home/groups/projects/admin/we_retail/O_LY03w9YjQvgikeLaWw",
+		"excerpt": "",
+		"name": "O_LY03w9YjQvgikeLaWw",
+		"title": "We.Retail",
+		"created": "2022-05-02 16:49:01"
+	}]
+}
