@@ -36,9 +36,20 @@ public class AemIdentityService {
 			String Purl = group.getString("path");
 			String gurl = "http://localhost:4502" + Purl + ".infinity.json"; 
 			
-			
-
-		}
+			readJsonFromUrl(gurl);
+			JSONArray members = json.getJSONArray("rep:members");
+			for (int j=0; j<members.length();j++)
+			{
+				String memid = members.getString(j);
+				String uurl = "http://localhost:4502/bin/querybuilder.json?property=jcr:uuid&property.value=" + memid + "&p.limit=-1";
+				
+				readJsonFromUrl(uurl);
+				JSONArray uarray = json.getJSONArray("hits");
+				//JSONObject ulink = uarray.getJSONObject();
+				
+			}
+			}
+		
 		
 		
 		
