@@ -146,8 +146,8 @@ public class AemAccess {
 			 * new String(encodedBytes, StandardCharsets.UTF_8);
 			 * req.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + s); }
 			 */
-			if (AemHttpClient.getDatabaseType().equals(CLOUD) && AemHttpClient.getAuthType().equals(OAUTH)) {
-				token = AemHttpClient.getCloudBearerToken();
+			if (AemHttpClient.getAuthType().equals(OAUTH)) {
+				token = AemHttpClient.getDatabaseType().equals(CLOUD)?AemHttpClient.getCloudBearerToken():AemHttpClient.getBearerToken();
 				System.out.println("aem acess class token one:" + token);
 				req.addHeader(HttpHeaders.AUTHORIZATION, token);
 			} else {
