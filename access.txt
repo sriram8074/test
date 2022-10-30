@@ -1,0 +1,246 @@
+package aemapi;
+
+import static aemapi.Constants.OAUTH;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+
+@Slf4j
+public class AemAccess {
+
+  private static String AEM_ENDPOINT;
+  private static boolean isFirst=true;
+
+  private static final Executor executor = Executor.newInstance(HttpClients.custom()
+      .setDefaultRequestConfig(
+          RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+      .build());
+
+  public static void setAemEndpoint(String aemEndpoint) {
+    AEM_ENDPOINT = aemEndpoint;
+  }
+
+  public static final String QUERY_BUILDER_ENDPOINT = "/bin/querybuilder.json";
+
+  public static String getAemEndpoint() {
+    return AEM_ENDPOINT;
+  }
+
+  protected static JsonObject getToJsonObject(String uri) throws IOException {
+    return toJsonObject(requestGet(uri));
+  }
+
+  protected static JsonObject getToJsonObject(URI uri) throws IOException {
+    return toJsonObject(requestGet(uri));
+  }
+
+  protected static JsonObject getAdministratorsGroupToJsonObject(URI uri)
+      throws IOException {
+    HttpResponse httpResponse = sendRequest(Request.Get(uri));
+    if (httpResponse.getStatusLine().getStatusCode() > 400) {
+      return null;
+    }
+    return toJsonObject(httpResponse);
+  }
+
+  protected static InputStream getToInputStream(URI uri) throws IOException {
+    return sendInputStreamRequest(Request.Get(uri));
+  }
+
+  private static HttpResponse requestGet(String uri) throws IOException {
+    HttpResponse httpResponse = sendRequest(Request.Get(uri));
+    handleErrorResponse(httpResponse);
+    return httpResponse;
+  }
+
+  private static HttpResponse requestGet(URI uri) throws IOException {
+    HttpResponse httpResponse = sendRequest(Request.Get(uri));
+    handleErrorResponse(httpResponse);
+    return httpResponse;
+  }
+
+  private static JsonObject toJsonObject(HttpResponse response)
+      throws IOException {
+    JsonObject json = null;
+    if (response.getStatusLine().getStatusCode() == 300) {
+      return json;
+    }
+    json = new Gson().fromJson(toString(response),
+        JsonObject.class);
+    if (AemHttpClient.isDebugEnabled()) {
+      System.out.println("Json> " + json.toString());
+    }
+    if (checkError(json)) {
+      return null;
+    }
+    return json;
+  }
+
+  private static boolean checkError(JsonObject json) {
+    if (json.get("error") == null) {
+      return false;
+    }
+    String errorCode = (json.get("error_code") != null)
+        ? json.get("error_code").getAsString()
+        : "";
+    String error = (json.get("error") != null)
+        ? json.get("error").getAsString()
+        : "";
+    String errorDescription = (json.get("error_description") != null)
+        ? json.get("error_description").getAsString()
+        : "";
+    log.info(
+        "Error> " + errorCode + " " + error + " (" + errorDescription + ")");
+    return true;
+  }
+
+	/*
+	 * private static HttpResponse sendRequest(Request req) throws IOException {
+	 * String token; String userName; String password; if
+	 * (AemHttpClient.isDebugEnabled()) { log.info(System.lineSeparator() +
+	 * "Request> " + req.toString()); } if
+	 * (Objects.nonNull(AemHttpClient.getAuthType()) &&
+	 * AemHttpClient.getAuthType().equals(OAUTH)) { token =
+	 * AemHttpClient.getBearerToken(); req.addHeader(HttpHeaders.AUTHORIZATION,
+	 * token); } else { userName = AemHttpClient.getUserName(); password =
+	 * AemHttpClient.getPassword(); String credentials = userName + ":" + password;
+	 * byte[] encodedBytes =
+	 * Base64.encodeBase64(credentials.getBytes(StandardCharsets.UTF_8)); String s =
+	 * new String(encodedBytes, StandardCharsets.UTF_8);
+	 * req.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + s); } HttpResponse
+	 * response = executor.execute(req).returnResponse(); if
+	 * (AemHttpClient.isDebugEnabled()) { log.info("Response> " +
+	 * response.getStatusLine().toString() + " " + response.getEntity().toString());
+	 * } return response; }
+	 */
+  
+  private static HttpResponse sendRequest(Request req) throws IOException {
+	    HttpResponse response = null;
+	    Gson gson = new Gson();
+	    Request primaryReq = gson.fromJson(gson.toJson(req), Request.class);
+	   //String token = AemHttpClient.getBearerToken();
+	    String token = "Bearer " + "eyJhbGciOiJSUzI1NiIsIng1dSI6Imltc19uYTEta2V5LWF0LTEuY2VyIiwia2lkIjoiaW1zX25hMS1rZXktYXQtMSIsIml0dCI6ImF0In0.eyJpZCI6IjE2NjYwODYxNjUxNTFfNjlkMTIyZjktMjEzOS00YjRlLThiZDUtZjYzMmU1ZDdlOTNmX3VlMSIsInR5cGUiOiJhY2Nlc3NfdG9rZW4iLCJjbGllbnRfaWQiOiJjbS1wNjk4MDItZTYxNjE1NS1pbnRlZ3JhdGlvbiIsInVzZXJfaWQiOiIzNkE4MDJFMTYyQ0VDQjNCMEE0OTVGODRAdGVjaGFjY3QuYWRvYmUuY29tIiwiYXMiOiJpbXMtbmExIiwiYWFfaWQiOiIzNkE4MDJFMTYyQ0VDQjNCMEE0OTVGODRAdGVjaGFjY3QuYWRvYmUuY29tIiwiY3RwIjowLCJmZyI6IlczMkFNRUo1RlBFNVlIVUtHTVFGWUhRQVVFPT09PT09IiwibW9pIjoiNzE0ZDk3ODUiLCJleHBpcmVzX2luIjoiODY0MDAwMDAiLCJzY29wZSI6InJlYWRfcGMuZG1hX2FlbV9hbXMsb3BlbmlkLEFkb2JlSUQscmVhZF9vcmdhbml6YXRpb25zLGFkZGl0aW9uYWxfaW5mby5wcm9qZWN0ZWRQcm9kdWN0Q29udGV4dCIsImNyZWF0ZWRfYXQiOiIxNjY2MDg2MTY1MTUxIn0.GfKJl0mEG2i2NdemqQyI6blskmNGuUAltzLRgNBbQq7lCTc17Jr1Lm59gATJDajjZpL7MRpZBoEbwz-EtuXKh_bT42I4YfLXcvEXat7XVKsK-2Pqy3cOW2WRjMtgKeGJwE7ezluPOcErNzTIaN_PIdzzEOz70nNdkG2NmSQrC8z29rBknWL-3IZs61p-ETZg9YitkTX0fXXdVzE4Tm3BpnFy9CoyQzoGeo8QREONti5_1kap9dqmP_R40HrUMzIbwAi-cNIleoAg8gkilvpQcuLgOGAJOWpEXPrFQRQbInMNat2RNk24s0ZyDYex3gxdzFh-MhNG4rfVlvKVyXO71g";
+         if(isFirst) {
+        	 AemHttpClient.setBearerToken(token);
+        	// String token = AemHttpClient.getBearerToken();
+         }
+	    
+     	 response = executeRequest(req,AemHttpClient.getBearerToken());
+	     if(response.getStatusLine().getStatusCode()==401) {
+	    	 System.out.println("going inside 401");
+	    	 System.out.println("going inside 401");
+	    	 System.out.println("going inside 401");
+	    	 System.out.println("going inside 401");
+	    	 System.out.println("going inside 401");
+	        Request retryReq = gson.fromJson(gson.toJson(primaryReq), Request.class);
+	        //String token = AemHttpClient.getAccessToken(token, token, token, token);
+	        
+	        String	clientId = AemHttpClient.getClientId();
+	        String clientSecret = AemHttpClient.getClientSecret();
+	        String priKey = AemHttpClient.getPrivateKey();
+	        String aemUrl = AemHttpClient.getAemUrl();
+				try {
+					String token1 = AemHttpClient.createAndSetAccessToken( clientId,  clientSecret,  priKey, aemUrl);
+					AemHttpClient.setBearerToken(token1);
+					response = executeRequest(retryReq,token1);
+				} catch (AemHttpClientException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
+     	      }
+	    handleErrorResponse(response);
+	    return response;
+	  }
+
+	  private static HttpResponse executeRequest(Request request,String token) throws IOException {
+	    HttpResponse response;
+	    if (AemHttpClient.isDebugEnabled())
+	      System.out.println(System.lineSeparator() + "Request> " + request.toString());
+	    //String token = AemHttpClient.getBearerToken();
+	    request.addHeader(HttpHeaders.AUTHORIZATION, token);
+	    try {
+	      response = executor.execute(request).returnResponse();
+	    } catch (IOException ex) {
+	      if (ex.getMessage().contains("closing chunk expected")) {
+	        log.warn("ConnectionClosedException: " + ex.getMessage());
+	        response = null;
+	      } else {
+	        throw ex;
+	      }
+	    }
+	    if (AemHttpClient.isDebugEnabled() && Objects.nonNull(response))
+	      System.out.println("Response> " + response.getStatusLine().toString()
+	          + " " + response.getEntity().toString());
+	    return response;
+	  }
+
+  private static InputStream sendInputStreamRequest(Request req) throws IOException {
+    String token;
+    String userName;
+    String password;
+    if (AemHttpClient.isDebugEnabled()) {
+      log.info(System.lineSeparator() + "Request> " + req.toString());
+    }
+    if (AemHttpClient.getAuthType().equals(OAUTH)) {
+      token = AemHttpClient.getBearerToken();
+      /*String	clientId = AemHttpClient.getClientId();
+      String clientSecret = AemHttpClient.getClientSecret();
+      String priKey = AemHttpClient.getPrivateKey();
+      String aemUrl = AemHttpClient.getAemUrl();
+      try {
+		token = AemHttpClient.createAndSetAccessToken(clientId, clientSecret, priKey, aemUrl);*/
+		req.addHeader(HttpHeaders.AUTHORIZATION, token);
+		/*
+		 * } catch (AemHttpClientException e) { // TODO Auto-generated catch block
+		 */	
+    } else {
+      userName = AemHttpClient.getUserName();
+      password = AemHttpClient.getPassword();
+      String credentials = userName + ":" + password;
+      byte[] encodedBytes = Base64.encodeBase64(credentials.getBytes(StandardCharsets.UTF_8));
+      String s = new String(encodedBytes, StandardCharsets.UTF_8);
+      req.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + s);
+    }
+    HttpResponse response = executor.execute(req).returnResponse();
+    StatusLine statusLine = response.getStatusLine();
+    if (statusLine.getStatusCode() != 200) {
+      return null;
+    }
+    HttpEntity httpEntity = response.getEntity();
+    return httpEntity.getContent();
+  }
+
+  private static void handleErrorResponse(HttpResponse response)
+      throws HttpResponseException {
+    StatusLine statusLine = response.getStatusLine();
+    if (statusLine.getStatusCode() != 200 && statusLine.getStatusCode() != 300) {
+      throw new HttpResponseException(statusLine.getStatusCode(),
+          statusLine.getReasonPhrase());
+    }
+  }
+
+  private static String toString(HttpResponse response) throws IOException {
+    return EntityUtils.toString(response.getEntity());
+  }
+
+}
