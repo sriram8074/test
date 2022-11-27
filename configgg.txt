@@ -1,0 +1,115 @@
+{
+    "repositoryConfiguration": {
+        "repositoryId": "227ff106-4c43-48f1-938e-1e83be5da928",
+        "dataSourceIamRoleArn": "arn:aws:iam::070874207938:role/kendra-p2-datasource-role-arn",
+        "connectionConfiguration": {
+            "repositoryEndpointMetadata": {
+                "aemUrl": "https://author-p69802-e616155.adobeaemcloud.com",
+                "authType" : "OAuth2"
+            },
+           "repositoryCredentials": {
+                "username": "saas",
+                "password": "1234",
+                "orgId": "ACF946E96296BD680A495FBB@AdobeOrg",
+                "technicalAccountId": "36A802E162CECB3B0A495F84@techacct.adobe.com",
+                "imsHost": "ims-na1.adobelogin.com",
+                "clientId": "cm-p69802-e616155-integration",
+                "clientSecret": "p8e-ktVnDsLlvqo2J6YygLljRAipz0bvzxoQ",
+                "privateKey": "MIIEowIBAAKCAQEAq2kcIE8HejSe8yPEPhoBXwtKGgrfiQEdqIGT3KNRo9nTLpbmYdVdOZ/Z5oWouf7AbAe8MnBnVRzig7YmZ6okSvibcV2MR8C9G6C+ldo/4Mz4pznL4HXWqnRVv/QQpCK5UoYAecR0M5OkEgSiiaCd8NzVMFyy8HODLNYyFIrF7oPFVdNs5MgNBGQJ3Xn11aT3br9wYWo79lPIYTzufya+il2K8nIwt1TGTVY7mHsnBDb/slb1nJYN2nzNv/YM3XN4USMznfmN/SH2WIATLwU4K738YvOaZjyjR9TEjyDf5ePDsHSvky3/2LILnKLkRZlxjAxakJflIDsyvsLy9reN2QIDAQABAoIBAH4k/mPwhQo0S32XpsYlETlG76O2uMb0oUTvB0fqkRxKI5Y3yxfYk6DiuNNjLcajaiyWjLN58TG77h8MH7tOhSL/TjXhqGjtuL3qUBer5DKl5Z/7csSfM/mBX9HB5bVFMKlAoHz8TJ/gWXBBJPSv1Uv62JGcxrsZ50FJ6NUhQ4TBE6f/jyyzCVbeLcQycXXpIuC58ZfSZfNGX/hJHZp/UB7QQCXLPXcxAvHxL8DASbU5/vByA35nGgGPPn8T9xPSjKVAu8RZZOTKW2KRepZ9YxUBWu68SFKSrrzR4i1FbHg3CPX+lmzWsO0mn08D7xzc/O2JFvaf5q02gAhA0vEiGNkCgYEA3++VlqHljrkTWrEY6q668fIu9y4W0skcC2HXNcTckr7z2vt2JV9LgReL6F18Y2ndVYUPKj803wKL9JTyyNsjgyd7qMEvZCtLN2Awlg+GU/RvdunvIsMvIUQ2Brc+rar6tGV4Wzkss+I+ZKRLmwKztuNOKN+cyEeTegAr1EzrpeMCgYEAw/QzPy0D28x1fGKoE2Cbm+RXDQbYfeERoa4AELanfcTkjK15L/Hjcg6LA5y+x7wse6f2UYZoEgoSlcQ/1q2UObMJbOCwrcig2T/w+xRkRPHzjg93/lNdgGc21uasav6lqhZH1mM2sgjRymsMdyDBpas/iMukqUxMJKZsmN9hKhMCgYEA0LviE6aU85RQFhk9wINefmfgn0a2v4P2QCXTFKuLbr3PUC9U0UEigBISt2VsrL3hMfX1TMvd3IHjMvgj1lVtpLMI8SQhqJ0yX0up/jY6X8dYnt8vqJeHNtr+AQSNyBO33K84oM+Ke6JHxkfesX6zRaZbFH5bBdSyAuZl9F4+yUECgYBIyz0GaRiX3JqAfL3nhOoJvYfBJRvjl2rPXy5TByethylIQWFVuExAILrvupj85iC4RyswGfgrS2agEGmOvKjlzmbf9ZBs3q0yR5ikDW06V4+c5I41Ao8nljA/IS5ICRVN3D0PnYfCF5in06Cr2JVXkAhoLw6afeeDbffFyqXz1QKBgFwDa8uIiHrn6e3pZ1VQYEiy9msqmC1k75KDa0bJivX9BTHziBzJXh7ufj8LXZ06fNf23Tt6r0PkvY5Kra9cqtjQm0muOhQaNiGkZQO9Y1mgPrn3FzB/HNxAg93epbQ9YD86Avwc2nWTS3ByJlUcZu+8uWP2WD+sVCcHjRGzYGeY"
+            }
+        },
+        "repositoryConfigurations": {
+            "page": {
+                "fieldMappings": [
+                     {
+                        "indexFieldName": "_source_uri",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_page_source_uri"
+                     },
+					{
+                        "indexFieldName": "_authors",
+                        "indexFieldType": "STRING_LIST",
+                        "dataSourceFieldName": "aem_page_createdBy"
+                    },
+                    {
+                        "indexFieldName": "aem_page_publisher",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_page_lastReplicatedBy"
+                    },
+                    {
+                        "indexFieldName": "aem_page_template",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_page_template"
+                    },
+                    {
+                        "indexFieldName": "_category",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_entity_type"
+                    },
+                    {
+                        "indexFieldName": "_created_at",
+                        "indexFieldType": "DATE",
+                        "dateFieldFormat": "dd-MMM-yyyy HH:mm:ss",
+                        "dataSourceFieldName": "aem_page_createdAt"
+                    },
+                    {
+                        "indexFieldName": "_last_updated_at",
+                        "indexFieldType": "DATE",
+                        "dateFieldFormat": "dd-MMM-yyyy HH:mm:ss",
+                        "dataSourceFieldName": "aem_page_lastModified"
+                    }                                         
+                ]
+            },
+			"asset": {
+                "fieldMappings": [
+                    {
+                        "indexFieldName": "_source_uri",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_asset_source_uri"
+                    },
+					{
+                        "indexFieldName": "_authors",
+                        "indexFieldType": "STRING_LIST",
+                        "dataSourceFieldName": "aem_asset_createdBy"
+                    },
+                    {
+                        "indexFieldName": "_category",
+                        "indexFieldType": "STRING",
+                        "dataSourceFieldName": "aem_asset_type"
+                    },
+                    {
+                        "indexFieldName": "_created_at",
+                        "indexFieldType": "DATE",
+                        "dateFieldFormat": "dd-MMM-yyyy HH:mm:ss",
+                        "dataSourceFieldName": "aem_asset_createdAt"
+                    },
+                    {
+                        "indexFieldName": "_last_updated_at",
+                        "indexFieldType": "DATE",
+                        "dateFieldFormat": "dd-MMM-yyyy HH:mm:ss",
+                        "dataSourceFieldName": "aem_asset_lastModified"
+                    }					
+                ]
+            }
+        },
+        "fieldMappings": null,
+        "crawlType": "FULL_CRAWL",
+        "additionalProperties": {
+            "deploymentType":"CLOUD",
+			"pageRootPaths": ["/content/demo2"],
+			"assetRootPaths":["/content/dam/vandanafolder"],
+			"crawlAssets": true,
+			"crawlPages": false,
+			"pageInclusionPatterns": null,
+			"pageExclusionPatterns": null,
+			"assetInclusionPatterns": null,
+			"assetExclusionPatterns": null,
+			"pageComponents" : null
+        }
+    },
+    "kendraIndexInfo": {
+        "indexId": "b380bc03-3a1e-42f8-82db-e216c8a6a518",
+        "iamRoleArn": "arn:aws:iam::070874207938:role/kendra-p2-index-role-arn"
+    },
+    "awsAccountId": "070874207938"
+}
