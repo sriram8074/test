@@ -1,0 +1,409 @@
+package com.amazonaws.kendra.connector.aem.model.repository;
+
+import static aemapi.Constants.OAUTH;
+import static com.amazonaws.kendra.connector.aem.util.Constants.AEM_URL;
+import static com.amazonaws.kendra.connector.aem.util.Constants.ASSET_NAME_EXCLUSION_PATTERNS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.ASSET_NAME_INCLUSION_PATTERNS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.ASSET_ROOT_PATHS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.AUTH_TYPE;
+import static com.amazonaws.kendra.connector.aem.util.Constants.CLIENT_ID;
+import static com.amazonaws.kendra.connector.aem.util.Constants.CLIENT_SECRET;
+import static com.amazonaws.kendra.connector.aem.util.Constants.CONTENT_FRAGMENT_VARIATIONS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.CRAWL_ASSETS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.CRAWL_PAGES;
+import static com.amazonaws.kendra.connector.aem.util.Constants.DEPLOYMENT_TYPE;
+import static com.amazonaws.kendra.connector.aem.util.Constants.EMPTY_STRING;
+import static com.amazonaws.kendra.connector.aem.util.Constants.IMS_HOST;
+import static com.amazonaws.kendra.connector.aem.util.Constants.ORG_ID;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PAGE_COMPONENTS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PAGE_NAME_EXCLUSION_PATTERNS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PAGE_NAME_INCLUSION_PATTERNS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PAGE_ROOT_PATHS;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PRIVATE_KEY;
+import static com.amazonaws.kendra.connector.aem.util.Constants.PW;
+import static com.amazonaws.kendra.connector.aem.util.Constants.TECHNICAL_ACCOUNT_ID;
+import static com.amazonaws.kendra.connector.aem.util.Constants.TIMEZONE_CONFIG;
+import static com.amazonaws.kendra.connector.aem.util.Constants.USERNAME;
+
+import aemapi.Constants;
+import com.amazonaws.kendra.connector.aem.model.enums.Entity;
+import com.amazonaws.kendra.connector.aem.model.enums.ErrorDefinition;
+import com.amazonaws.kendra.connector.aem.util.CommonUtil;
+import com.amazonaws.kendra.connector.sdk.exception.BadRequestException;
+import com.amazonaws.kendra.connector.sdk.model.repository.RepositoryConfiguration;
+import com.amazonaws.util.CollectionUtils;
+import com.amazonaws.util.StringUtils;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Value;
+
+/**
+ * Configuration class for AEM connector.
+ *
+ * @author omkar_phadtare
+ */
+@Value
+@AllArgsConstructor(staticName = "of")
+public class AemConfiguration {
+
+  RepositoryConfiguration repositoryConfiguration;
+
+  /**
+   * Fetch AEM username from repository configuration.
+   *
+   * @return AEM username.
+   */
+  public String getUsername() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(USERNAME);
+  }
+
+  /**
+   * Fetch AEM password from repository configuration.
+   *
+   * @return AEM password.
+   */
+  public String getPassword() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(PW);
+  }
+
+  /**
+   * Fetch AEM client ID from repository configuration.
+   *
+   * @return AEM client ID.
+   */
+  public String getClientId() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(CLIENT_ID);
+  }
+
+  /**
+   * Fetch AEM client secret from repository configuration.
+   *
+   * @return AEM client secret.
+   */
+  public String getClientSecret() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(CLIENT_SECRET);
+  }
+
+  /**
+   * Fetch AEM private key from repository configuration.
+   *
+   * @return AEM private key.
+   */
+  public String getPrivateKey() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(PRIVATE_KEY);
+  }
+
+  /**
+   * Fetch AEM ImsHost from repository configuration.
+   *
+   * @return AEM ImsHost.
+   */
+  public String getImsHost() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(IMS_HOST);
+  }
+
+  /**
+   * Fetch AEM TechnicalAccountId from repository configuration.
+   *
+   * @return AEM TechnicalAccountId.
+   */
+  public String getTechnicalAccountId() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryCredentials().get(TECHNICAL_ACCOUNT_ID);
+  }
+
+  /**
+   * Fetch AEM OrgId from repository configuration.
+   *
+   * @return AEM OrgId.
+   */
+  public String getOrgId() {
+    return (String) repositoryConfiguration.getConnectionConfiguration().getRepositoryCredentials()
+        .get(ORG_ID);
+  }
+
+  /**
+   * Fetch AEM url from repository configuration.
+   *
+   * @return AEM url.
+   */
+  public String getAemUrl() {
+    return (String) repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryEndpointMetadata().get(AEM_URL);
+  }
+
+  /**
+   * Method to fetch crawl type from repository configuration.
+   *
+   * @return crawl type.
+   */
+  public String getCrawlType() {
+    return Objects.nonNull(repositoryConfiguration.getCrawlType())
+        ? repositoryConfiguration.getCrawlType().toString() : EMPTY_STRING;
+
+  }
+
+  /**
+   * Fetch assets field_mapping from repository configuration.
+   *
+   * @return assets field_mapping
+   */
+  public List<RepositoryConfiguration.FieldMapping> getAssetsFieldMappings() {
+    RepositoryConfiguration assetEntity;
+    Map<String, RepositoryConfiguration> repositoryConfigurations =
+        this.repositoryConfiguration.getRepositoryConfigurations();
+    assetEntity = repositoryConfigurations.get(Entity.ASSET.getName().toLowerCase());
+    return CollectionUtils.isNullOrEmpty(
+        assetEntity
+            .getFieldMappings()) ? new ArrayList<>() :
+        assetEntity.getFieldMappings();
+  }
+
+  /**
+   * Fetch pages field_mapping from repository configuration.
+   *
+   * @return pages field_mapping
+   */
+  public List<RepositoryConfiguration.FieldMapping> getPageFieldMappings() {
+    RepositoryConfiguration pageEntity;
+    Map<String, RepositoryConfiguration> repositoryConfigurations =
+        this.repositoryConfiguration.getRepositoryConfigurations();
+    pageEntity = repositoryConfigurations.get(Entity.PAGE.getName().toLowerCase());
+    return CollectionUtils.isNullOrEmpty(
+        pageEntity
+            .getFieldMappings()) ? new ArrayList<>() :
+        pageEntity.getFieldMappings();
+  }
+
+  /**
+   * Fetch repository_configuration.
+   */
+  public Map<String, RepositoryConfiguration> getRepositoryConfigurations() {
+    return CollectionUtils
+        .isNullOrEmpty(this.repositoryConfiguration
+            .getRepositoryConfigurations().entrySet()) ? new HashMap<>() :
+        this.repositoryConfiguration.getRepositoryConfigurations();
+  }
+
+  /**
+   * Fetch Additional_properties from repository configuration.
+   *
+   * @return Additional_properties
+   */
+  public Map<String, Object> getAdditionalProperties() {
+    return CollectionUtils
+        .isNullOrEmpty(this.repositoryConfiguration
+            .getAdditionalProperties().entrySet()) ? new HashMap<>() :
+        this.repositoryConfiguration.getAdditionalProperties();
+  }
+
+  /**
+   * Method to fetch auth type from repository configuration.
+   *
+   * @return auth type.
+   */
+  public String getAuthType() {
+    String authTypeObj = (String) this.repositoryConfiguration.getConnectionConfiguration()
+        .getRepositoryEndpointMetadata().get(AUTH_TYPE);
+    String authType = OAUTH;
+    if (!(StringUtils.isNullOrEmpty(authTypeObj) || authTypeObj.trim().isEmpty())) {
+      authType = authTypeObj;
+    }
+    return authType;
+  }
+
+  /**
+   * Fetch root paths from additional properties.
+   *
+   * @return page root paths.
+   */
+  public List<String> getPageRootPaths() {
+    Object rootPaths = getAdditionalProperties().get(PAGE_ROOT_PATHS);
+    if (rootPaths instanceof List<?>) {
+      return (List<String>) rootPaths;
+    } else {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_PAGE_ROOT_PATHS,
+          Constants.SOLUTION_FOR_AEM_PAGE_ROOT_PATHS));
+    }
+  }
+
+  /**
+   * Fetch root paths from additional properties.
+   *
+   * @return asset root paths.
+   */
+  public List<String> getAssetRootPaths() {
+    Object rootPaths = getAdditionalProperties().get(ASSET_ROOT_PATHS);
+    if (rootPaths instanceof List<?>) {
+      return (List<String>) rootPaths;
+    } else {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_ASSET_ROOT_PATHS,
+          Constants.SOLUTION_FOR_AEM_ASSET_ROOT_PATHS));
+    }
+  }
+
+  /**
+   * Fetch boolean - crawlPages from additional properties.
+   *
+   * @return crawlPages boolean.
+   */
+  public boolean crawlPages() {
+    String crawlPages = String.valueOf(getAdditionalProperties().get(CRAWL_PAGES));
+    return Boolean.parseBoolean(crawlPages);
+  }
+
+  /**
+   * Fetch boolean - crawlAssets from additional properties.
+   *
+   * @return crawlAssets boolean.
+   */
+  public boolean crawlAssets() {
+    String crawlAssets = String.valueOf(getAdditionalProperties().get(CRAWL_ASSETS));
+    return Boolean.parseBoolean(crawlAssets);
+  }
+
+  /**
+   * Fetch page name inclusion patterns from repository configuration.
+   *
+   * @return page name inclusion patterns.
+   */
+  public List<String> getPagePathInclusionPatterns() {
+    Object pageNameIncPatterns = getAdditionalProperties().get(PAGE_NAME_INCLUSION_PATTERNS);
+    List<String> pagePathInclusionPatternsEmptyList = new ArrayList<>();
+    if (Objects.nonNull(pageNameIncPatterns)) {
+      if (pageNameIncPatterns instanceof List<?>) {
+        return CollectionUtils.isNullOrEmpty((List<String>) pageNameIncPatterns)
+            ? pagePathInclusionPatternsEmptyList : (List<String>) pageNameIncPatterns;
+      } else {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+           ErrorDefinition.ERROR_GET_PAGE_PATH_EXCLUSION_OR_INCLUSION_PATTERNS,
+            Constants.SOLUTION_FOR_GET_PAGE_PATH_EXCLUSION_OR_INCLUSION_PATTERNS));
+      }
+    }
+    return pagePathInclusionPatternsEmptyList;
+  }
+
+  /**
+   * Fetch page name exclusion patterns from repository configuration.
+   *
+   * @return page name exclusion patterns.
+   */
+  public List<String> getPagePathExclusionPatterns() {
+    List<String> pagePathExclusionPatternsEmptyList = new ArrayList<>();
+    Object pageNameExcPatterns = getAdditionalProperties().get(PAGE_NAME_EXCLUSION_PATTERNS);
+    if (Objects.nonNull(pageNameExcPatterns)) {
+      if (pageNameExcPatterns instanceof List<?>) {
+        return CollectionUtils.isNullOrEmpty((List<String>) pageNameExcPatterns)
+            ? pagePathExclusionPatternsEmptyList : (List<String>) pageNameExcPatterns;
+      } else {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+            ErrorDefinition.ERROR_GET_PAGE_PATH_EXCLUSION_OR_INCLUSION_PATTERNS,
+            Constants.SOLUTION_FOR_GET_PAGE_PATH_EXCLUSION_OR_INCLUSION_PATTERNS));
+      }
+    }
+    return pagePathExclusionPatternsEmptyList;
+  }
+
+  /**
+   * Fetch asset name inclusion patterns from repository configuration.
+   *
+   * @return asset name inclusion patterns.
+   */
+  public List<String> getAssetPathInclusionPatterns() {
+    List<String> assetPathInclusionPatternsEmptyList = new ArrayList<>();
+    Object assetNameIncPatterns = getAdditionalProperties().get(ASSET_NAME_INCLUSION_PATTERNS);
+    if (Objects.nonNull(assetNameIncPatterns)) {
+      if (assetNameIncPatterns instanceof List<?>) {
+        return CollectionUtils.isNullOrEmpty((List<String>) assetNameIncPatterns)
+            ? assetPathInclusionPatternsEmptyList
+            : (List<String>) assetNameIncPatterns;
+      } else {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+            ErrorDefinition.ERROR_GET_ASSET_PATH_EXCLUSION_OR_INCLUSION_PATTERNS,
+            Constants.SOLUTION_FOR_GET_ASSET_PATH_EXCLUSION_OR_INCLUSION_PATTERNS));
+      }
+    }
+    return assetPathInclusionPatternsEmptyList;
+  }
+
+  /**
+   * Fetch asset name exclusion patterns from repository configuration.
+   *
+   * @return asset name exclusion patterns.
+   */
+  public List<String> getAssetPathExclusionPatterns() {
+    List<String> assetPathExclusionPatternsEmptyList = new ArrayList<>();
+    Object assetNameExcPatterns = getAdditionalProperties().get(ASSET_NAME_EXCLUSION_PATTERNS);
+    if (Objects.nonNull(assetNameExcPatterns)) {
+      if (assetNameExcPatterns instanceof List<?>) {
+        return CollectionUtils.isNullOrEmpty((List<String>) assetNameExcPatterns)
+            ? assetPathExclusionPatternsEmptyList : (List<String>) assetNameExcPatterns;
+      } else {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+            ErrorDefinition.ERROR_GET_ASSET_PATH_EXCLUSION_OR_INCLUSION_PATTERNS,
+            Constants.SOLUTION_FOR_GET_ASSET_PATH_EXCLUSION_OR_INCLUSION_PATTERNS));
+      }
+    }
+    return  assetPathExclusionPatternsEmptyList;
+  }
+
+  /**
+   * Fetch page components from repository configuration.
+   *
+   * @return page components.
+   */
+  public List<Map<String, Object>> getPageComponents() {
+    return (List<Map<String, Object>>) this.repositoryConfiguration.getAdditionalProperties()
+        .get(PAGE_COMPONENTS);
+  }
+
+  /**
+   * Fetch content fragment variation and fields from repository configuration.
+   *
+   * @return content fragment variation and fields..
+   */
+  public List<Map<String, Object>> getContentFragmentVariationAndField() {
+    return (List<Map<String, Object>>) this.repositoryConfiguration.getAdditionalProperties()
+        .get(CONTENT_FRAGMENT_VARIATIONS);
+  }
+
+  /**
+   * Method to fetch deployment type from repository configuration.
+   *
+   * @return deployment type.
+   */
+  public String getDeploymentType() {
+    return Objects.isNull(getAdditionalProperties().get(DEPLOYMENT_TYPE)) ? EMPTY_STRING :
+      getAdditionalProperties().get(DEPLOYMENT_TYPE).toString();
+  }
+
+  /**
+   * Fetch Time Zone from repository configuration.
+   *
+   * @return Time Zone.
+   */
+  public String getTimeZone() {
+    return String.valueOf(getAdditionalProperties().get(TIMEZONE_CONFIG));
+  }
+
+  /**
+   * Fetch VPC configuration from repository configuration.
+   *
+   * @return VPC configuration.
+   */
+  public Map<String, Object> getVpcConfiguration() {
+    return repositoryConfiguration.getVpcConfiguration();
+  }
+}

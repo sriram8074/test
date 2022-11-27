@@ -1,0 +1,220 @@
+package com.amazonaws.kendra.connector.aem.client;
+
+import aemapi.Constants;
+import com.amazonaws.kendra.connector.aem.model.enums.ErrorDefinition;
+import com.amazonaws.kendra.connector.aem.model.repository.AemConfiguration;
+import com.amazonaws.kendra.connector.aem.util.AddressValidation;
+import com.amazonaws.kendra.connector.aem.util.CommonUtil;
+import com.amazonaws.kendra.connector.sdk.exception.BadRequestException;
+import com.amazonaws.kendra.connector.sdk.model.repository.RepositoryConfiguration;
+import com.amazonaws.util.StringUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
+/**
+ * Aem Config Validation class for AEM connector.
+ *
+ * @author Nitin Gupta
+ */
+public class AemConfigValidation {
+
+  /**
+   * Validating Aem Configuration.
+   */
+  public static void validateConfiguration(AemConfiguration aemConfiguration) {
+    validateAemUrl(aemConfiguration.getAemUrl(), aemConfiguration.getVpcConfiguration());
+    String deploymentType = aemConfiguration.getDeploymentType();
+    validateDeploymentType(deploymentType);
+    String authType = aemConfiguration.getAuthType();
+    if (!StringUtils.isNullOrEmpty(authType)) {
+      if (authType.equals(Constants.BASIC)) {
+        basicAuthCredentialsValidation(aemConfiguration);
+      } else if (authType.equals(Constants.OAUTH) && deploymentType.equals(Constants.ON_PREMISE)) {
+        oauth2CredentialsValidation(aemConfiguration);
+      } else if (authType.equals(Constants.OAUTH) && deploymentType.equals(Constants.CLOUD)) {
+        oauth2SaaSCredentialsValidation(aemConfiguration);
+      } else {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+              ErrorDefinition.ERROR_INCORRECT_AEM_AUTH_TYPE,
+            Constants.SOLUTION_FOR_AEM_AUTH_TYPE));
+      }
+    }
+    if (StringUtils.isNullOrEmpty(aemConfiguration.getCrawlType())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_CRAWL_TYPE,
+          Constants.SOLUTION_FOR_CRAWL_TYPE));
+    }
+    validateFieldMappings(aemConfiguration,Constants.page);
+    validateFieldMappings(aemConfiguration,Constants.asset);
+  }
+
+  /**
+   * Validating DeploymentType field.
+   */
+  private static void validateDeploymentType(String deploymentType) {
+    if (deploymentType.isBlank()) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_DEPLOYMENT_TYPE_NULL_OR_EMPTY,
+          Constants.SOLUTION_FOR_DEPLOYMENT_TYPE));
+    } else if (!(deploymentType.equals(Constants.CLOUD)
+        || deploymentType.equals(Constants.ON_PREMISE))) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_INCORRECT_AEM_DEPLOYMENT_TYPE,
+          Constants.SOLUTION_FOR_DEPLOYMENT_TYPE));
+    }
+  }
+
+  /**
+   * Validating Page/Asset field mapping.
+   */
+  private static void validateFieldMappings(AemConfiguration aemConfiguration, String entity) {
+    List<RepositoryConfiguration.FieldMapping> fieldMappings;
+    String indexFieldError;
+    String dataSourceFieldError;
+    if (Objects.nonNull(entity) && entity.equals(Constants.page)) {
+      fieldMappings = aemConfiguration.getPageFieldMappings();
+      indexFieldError = CommonUtil.getErrorMessage(
+         ErrorDefinition.ERROR_PAGE_INDEX_FIELD_NAME,
+          Constants.SOLUTION_FOR_PAGE_INDEX_FIELD_NAME);
+      dataSourceFieldError = CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_PAGE_DATASOURCE_FIELD_NAME,
+          Constants.SOLUTION_FOR_PAGE_DATASOURCE_FIELD_NAME);
+    } else {
+      fieldMappings = aemConfiguration.getAssetsFieldMappings();
+      indexFieldError = CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_ASSET_INDEX_FIELD_NAME,
+          Constants.SOLUTION_FOR_ASSET_INDEX_FIELD_NAME);
+      dataSourceFieldError = CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_ASSET_DATASOURCE_FIELD_NAME,
+          Constants.SOLUTION_FOR_ASSET_DATASOURCE_FIELD_NAME);
+    }
+    if (fieldMappings.size() != 0) {
+      for (RepositoryConfiguration.FieldMapping f : fieldMappings) {
+        if (!Objects.nonNull(f.getIndexFieldName())
+            || StringUtils.isNullOrEmpty(f.getIndexFieldName().strip())) {
+          throw new BadRequestException(indexFieldError);
+        }
+        if (!Objects.nonNull(f.getDataSourceFieldName())
+            || StringUtils.isNullOrEmpty(f.getDataSourceFieldName().strip())) {
+          throw new BadRequestException(dataSourceFieldError);
+        }
+      }
+    }
+  }
+
+  /**
+   * Validating Aem URL.
+   */
+  public static void validateAemUrl(String url, Map<String, Object> vpnConfiguration) {
+    if (StringUtils.isNullOrEmpty(url) || StringUtils.isNullOrEmpty(url.trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(ErrorDefinition.ERROR_AEM_HOST_URL,
+          Constants.SOLUTION_FOR_AEM_HOST_URL));
+    } else {
+      if (isValidUrl(url)) {
+        AddressValidation.validateSecurityChecksOnUrl(url, vpnConfiguration);
+      }
+    }
+  }
+
+  /**
+   * Validating AEM URL pattern.
+   */
+  private static boolean isValidUrl(String url) {
+    String urlPattern = Constants.URL_PATTERN;
+    Pattern pattern = Pattern.compile(urlPattern, Pattern.CASE_INSENSITIVE);
+    Matcher m = pattern.matcher(url);
+    if (!m.matches()) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+            ErrorDefinition.ERROR_AEM_URL_INVALID_FORMAT,
+            Constants.SOLUTION_FOR_AEM_URL_INVALID_FORMAT));
+    }
+    return m.matches();
+  }
+
+  /**
+   * Validating AEM basic Auth Credentials.
+   */
+  private static void basicAuthCredentialsValidation(AemConfiguration aemConfiguration) {
+    if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getUsername()) || StringUtils.isNullOrEmpty(
+        aemConfiguration.getUsername().trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_USER_NAME,
+          Constants.SOLUTION_FOR_AEM_USER_NAME));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getPassword()) || StringUtils.isNullOrEmpty(
+        aemConfiguration.getPassword().trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_PASSWORD,
+          Constants.SOLUTION_FOR_AEM_PW));
+    }
+  }
+  
+  /**
+   * Validating AEM SaaS OAUTH2 Credentials.
+   */
+  private static void oauth2SaaSCredentialsValidation(AemConfiguration aemConfiguration) {
+    if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getClientId())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_CLIENT_ID,
+          Constants.SOLUTION_FOR_AEM_CLIENT_ID));
+
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getClientSecret())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_CLIENT_SECRET,
+          Constants.SOLUTION_FOR_AEM_CLIENT_SECRET));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getPrivateKey())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_PRIVATE_KEY,
+          Constants.SOLUTION_FOR_AEM_PRIVATE_KEY));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getImsHost())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_INCORRECT_AEM_IMS_HOST,
+          Constants.SOLUTION_FOR_AEM_IMS_HOST));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getTechnicalAccountId())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_INCORRECT_AEM_TECHNICAL_ACCOUNT_ID,
+          Constants.SOLUTION_FOR_AEM_TECHNICAL_ACCOUNT_ID));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getOrgId())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_INCORRECT_AEM_ORGID,
+          Constants.SOLUTION_FOR_AEM_ORGID));
+    }
+  }
+
+  /**
+   * Validating AEM basic OAUTH2 Credentials.
+   */
+  private static void oauth2CredentialsValidation(AemConfiguration aemConfiguration) {
+    if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getClientId()) || StringUtils.isNullOrEmpty(
+        aemConfiguration.getClientId().trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_CLIENT_ID,
+          Constants.SOLUTION_FOR_AEM_CLIENT_ID));
+
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getClientSecret()) || StringUtils.isNullOrEmpty(
+        aemConfiguration.getClientSecret().trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_CLIENT_SECRET,
+          Constants.SOLUTION_FOR_AEM_CLIENT_SECRET));
+    } else if (StringUtils.isNullOrEmpty(aemConfiguration
+        .getPrivateKey()) || StringUtils.isNullOrEmpty(
+        aemConfiguration.getPrivateKey().trim())) {
+      throw new BadRequestException(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_AEM_PRIVATE_KEY,
+          Constants.SOLUTION_FOR_AEM_PRIVATE_KEY));
+    }
+  }
+}
