@@ -1,0 +1,367 @@
+package com.amazonaws.kendra.connector.aem.model.item;
+
+import static aemapi.Constants.COMMA;
+import static aemapi.Constants.METADATA_LIST_SEPARATOR;
+import static com.amazonaws.kendra.connector.aem.util.Constants.TIMESTAMP;
+import static com.amazonaws.kendra.connector.aem.util.Constants.TIMEZONE;
+import static java.util.stream.Collectors.toList;
+
+import aemapi.Constants;
+import com.amazonaws.kendra.connector.aem.model.enums.AssetDataSourceField;
+import com.amazonaws.kendra.connector.aem.model.enums.Entity;
+import com.amazonaws.kendra.connector.aem.model.enums.ErrorDefinition;
+import com.amazonaws.kendra.connector.aem.model.repository.AemConfiguration;
+import com.amazonaws.kendra.connector.aem.util.CommonUtil;
+import com.amazonaws.kendra.connector.sdk.exception.BadRequestException;
+import com.amazonaws.kendra.connector.sdk.exception.InternalServerError;
+import com.amazonaws.kendra.connector.sdk.model.item.Item;
+import com.amazonaws.kendra.connector.sdk.model.repository.RepositoryConfiguration;
+import com.amazonaws.services.kendra.model.ContentType;
+import com.amazonaws.services.kendra.model.DocumentAttribute;
+import com.amazonaws.services.kendra.model.DocumentAttributeValue;
+import com.amazonaws.services.kendra.model.Principal;
+import com.amazonaws.util.CollectionUtils;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TimeZone;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+
+
+/**
+ * Item class for assets.
+ *
+ * @author Nitin
+ */
+@Value
+@Builder(toBuilder = true)
+@Slf4j
+public class AssetItem implements Item {
+  private String name;
+  private InputStream inputStream;
+  private List<Principal> principals;
+  private AemConfiguration aemConfiguration;
+  private String aemAssetTitle;
+  private String aemAssetSourceUri;
+  private String aemAssetCreatedBy;
+  private String aemAssetType;
+  private String aemAssetCreatedAt;
+  private String aemAssetLastModified;
+  private String aemAssetPath;
+  private String aemAssetLastReplicatedBy;
+  private String aemAssetLastReplicatedAt;
+  private Map<String,String> customMetadata;
+
+  private Map<AssetDataSourceField, Function<RepositoryConfiguration.FieldMapping, String>>
+      dataSourceAttributeBuilders =
+      new ImmutableMap.Builder<AssetDataSourceField,
+          Function<RepositoryConfiguration.FieldMapping,
+              String>>()
+          .put(AssetDataSourceField.aem_asset_title, this::getAemAssetTitle)
+          .put(AssetDataSourceField.aem_asset_source_uri, this::getAemAssetSourceUri)
+          .put(AssetDataSourceField.aem_asset_createdBy, this::getAemAssetCreatedBy)
+          .put(AssetDataSourceField.aem_asset_type, this::getAemAssetType)
+          .put(AssetDataSourceField.aem_asset_createdAt, this::getAemAssetCreatedAt)
+          .put(AssetDataSourceField.aem_asset_lastModified, this::getAemAssetLastModified)
+          .put(AssetDataSourceField.aem_asset_lastReplicatedBy, this::getAemAssetLastReplicatedBy)
+          .put(AssetDataSourceField.aem_asset_lastReplicatedAt, this::getAemAssetLastReplicatedAt)
+          .build();
+
+  /**
+   * Method to get AemAssetLastModified  Attribute Value.
+   */
+  private String getAemAssetLastModified(RepositoryConfiguration.FieldMapping fieldMapping) {
+    String aemAssetLastModified = this.aemAssetLastModified;
+    if (!StringUtils.isEmpty(aemAssetLastModified)) {
+      DateFormat originalFormat = new SimpleDateFormat(TIMESTAMP, Locale.ENGLISH);
+      Date createdDate = null;
+      try {
+        createdDate = originalFormat.parse(aemAssetLastModified);
+      } catch (ParseException e) {
+        log.warn("Cannot parse requested value : {} to Date", aemAssetLastModified);
+      }
+      DateFormat dateFormat = new SimpleDateFormat(fieldMapping.getDateFieldFormat());
+      dateFormat.setTimeZone(TimeZone.getTimeZone(TIMEZONE));
+      return dateFormat.format(createdDate);
+    }
+    return aemAssetLastModified;
+  }
+
+  /**
+   * Method to get AemAssetCreatedAt Attribute Value.
+   */
+  private String getAemAssetCreatedAt(RepositoryConfiguration.FieldMapping fieldMapping) {
+    String aemAssetCreatedAt = this.aemAssetCreatedAt;
+    if (!StringUtils.isEmpty(aemAssetCreatedAt)) {
+      DateFormat originalFormat = new SimpleDateFormat(TIMESTAMP, Locale.ENGLISH);
+      Date createdDate = null;
+      try {
+        createdDate = originalFormat.parse(aemAssetCreatedAt);
+      } catch (ParseException e) {
+        log.warn("Cannot parse requested value : {} to Date", aemAssetCreatedAt);
+      }
+      DateFormat dateFormat = new SimpleDateFormat(fieldMapping.getDateFieldFormat());
+      dateFormat.setTimeZone(TimeZone.getTimeZone(TIMEZONE));
+      return dateFormat.format(createdDate);
+    }
+    return aemAssetCreatedAt;
+  }
+
+  /**
+   * Method to get AemAssetLastReplicatedAt Attribute Value.
+   */
+  private String getAemAssetLastReplicatedAt(RepositoryConfiguration.FieldMapping fieldMapping) {
+    String aemAssetLastReplicatedAt = this.aemAssetLastReplicatedAt;
+    if (!StringUtils.isEmpty(aemAssetLastReplicatedAt)) {
+      DateFormat originalFormat = new SimpleDateFormat(TIMESTAMP, Locale.ENGLISH);
+      Date lastReplicatedAt = null;
+      try {
+        lastReplicatedAt = originalFormat.parse(aemAssetLastReplicatedAt);
+      } catch (ParseException e) {
+        log.warn("Cannot parse requested value : {} to Date", aemAssetLastReplicatedAt);
+      }
+      DateFormat dateFormat = new SimpleDateFormat(fieldMapping.getDateFieldFormat());
+      dateFormat.setTimeZone(TimeZone.getTimeZone(TIMEZONE));
+      return dateFormat.format(lastReplicatedAt);
+    }
+    return aemAssetLastReplicatedAt;
+  }
+
+  /**
+   * Method to get AemAssetType Attribute Value.
+   */
+  private String getAemAssetType(RepositoryConfiguration.FieldMapping fieldMapping) {
+    return aemAssetType;
+  }
+
+  /**
+   * Method to get AemAssetCreatedBy Attribute Value.
+   */
+  private String getAemAssetCreatedBy(RepositoryConfiguration.FieldMapping fieldMapping) {
+    return aemAssetCreatedBy;
+  }
+
+  /**
+   * Method to get AemAssetSourceUri Attribute Value.
+   */
+  private String getAemAssetSourceUri(RepositoryConfiguration.FieldMapping fieldMapping) {
+    return aemAssetSourceUri;
+  }
+
+  /**
+   * Method to get AemAssetTitle Attribute Value.
+   */
+  private String getAemAssetTitle(RepositoryConfiguration.FieldMapping fieldMapping) {
+    return aemAssetTitle;
+  }
+
+  /**
+   * Method to get ChangeDetectionToken Attribute Value.
+   */
+  public Optional<String> getChangeDetectionToken() {
+    return Optional.of(getChangeDetectionTokenString());
+  }
+
+  /**
+   * Method to get AemAssetLastReplicatedBy Attribute Value.
+   */
+  private String getAemAssetLastReplicatedBy(RepositoryConfiguration.FieldMapping fieldMapping) {
+    return aemAssetLastReplicatedBy;
+  }
+
+  @Override
+  public String getDocumentId() {
+    return this.aemAssetPath;
+  }
+
+  @Override
+  public InputStream getDocumentBody() {
+    if (Objects.isNull(inputStream)) {
+      try {
+        InputStream targetStream = new ByteArrayInputStream(getDocumentTitle().getBytes(
+            StandardCharsets.UTF_8));
+        return targetStream;
+      } catch (Exception e) {
+        throw new BadRequestException(CommonUtil.getErrorMessage(
+            ErrorDefinition.ERROR_BUILDING_INPUT_STREAM, e.getMessage()), e);
+      }
+    }
+    return inputStream;
+  }
+
+  @Override
+  public String getDocumentTitle() {
+    return this.aemAssetTitle;
+  }
+
+  @Override
+  public ContentType getContentType() {
+    return null;
+  }
+
+  @Override
+  public List<DocumentAttribute> getDocumentAttributes() {
+    List<RepositoryConfiguration.FieldMapping> fieldMappings = null;
+    if (Objects.nonNull(aemConfiguration.getRepositoryConfiguration()
+        .getRepositoryConfigurations())) {
+      fieldMappings =
+          !Objects.isNull(
+              aemConfiguration.getRepositoryConfiguration().getRepositoryConfigurations()
+                  .get(Entity.ASSET.getEntityName()))
+              ? aemConfiguration.getRepositoryConfiguration().getRepositoryConfigurations()
+              .get(Entity.ASSET.getEntityName())
+              .getFieldMappings() :
+              new ArrayList<RepositoryConfiguration.FieldMapping>();
+    }
+
+    if (CollectionUtils.isNullOrEmpty(fieldMappings)) {
+      return ImmutableList.of();
+    }
+    return fieldMappings.stream().map(this::createFieldMapping).filter(Optional::isPresent)
+        .map(Optional::get).collect(toList());
+  }
+
+  private Optional<DocumentAttribute> createFieldMapping(
+      final RepositoryConfiguration.FieldMapping fieldMapping) {
+    if (Arrays.stream(AssetDataSourceField.values())
+        .noneMatch(
+            datasourceField -> datasourceField.name()
+                .equals(fieldMapping.getDataSourceFieldName()))) {
+      return this.getCustomAttribute(fieldMapping);
+    }
+    return this.getGenericAttr(fieldMapping);
+  }
+
+  /**
+   * Method to get Generic Attribute.
+   */
+  private Optional<DocumentAttribute> getGenericAttr(
+      final RepositoryConfiguration.FieldMapping fieldMapping) {
+
+    return Optional.ofNullable(fieldMapping).map(li -> fieldMapping.getDataSourceFieldName())
+        .map(dataSourceFieldName -> this.dataSourceAttributeBuilders
+            .get(AssetDataSourceField.valueOf(dataSourceFieldName))
+            .apply(fieldMapping))
+        .map(dataSourceFieldValue -> this.createDocumentAttributeValue(fieldMapping,
+            dataSourceFieldValue))
+        .map(documentAttributeValue -> new DocumentAttribute()
+            .withKey(fieldMapping.getIndexFieldName()).withValue(documentAttributeValue));
+  }
+
+  /**
+   * Method to return Document Attribute Value.
+   *
+   * @param fieldMapping input param
+   * @param value        input param
+   * @return DocumentAttributeValue
+   */
+
+  public final DocumentAttributeValue createDocumentAttributeValue(
+      final RepositoryConfiguration.FieldMapping fieldMapping,
+      final String value) {
+    if (fieldMapping.getIndexFieldType().equals(RepositoryConfiguration.IndexFieldType.STRING)) {
+      return new DocumentAttributeValue().withStringValue(value);
+    } else if (fieldMapping.getIndexFieldType()
+        .equals(RepositoryConfiguration.IndexFieldType.STRING_LIST)) {
+      String[] fieldValues = value.split(METADATA_LIST_SEPARATOR);
+      return new DocumentAttributeValue().withStringListValue(fieldValues);
+    } else if (fieldMapping.getIndexFieldType()
+        .equals(RepositoryConfiguration.IndexFieldType.LONG)) {
+      try {
+        return new DocumentAttributeValue()
+            .withLongValue((long) (Double.parseDouble(value)));
+      } catch (NumberFormatException ex) {
+        log.warn("Cannot parse requested value : {} to long", value);
+        return null;
+      }
+    } else if (fieldMapping.getIndexFieldType()
+        .equals(RepositoryConfiguration.IndexFieldType.DATE)) {
+      try {
+        return new DocumentAttributeValue()
+            .withDateValue(new SimpleDateFormat(fieldMapping.getDateFieldFormat()).parse(value));
+      } catch (Exception ex) {
+        log.warn("Cannot parse requested value : {} to date", value);
+        return null;
+      }
+    } else {
+      throw new InternalServerError(CommonUtil.getErrorMessage(
+          ErrorDefinition.ERROR_CREATE_DOCUMENT_ATTRIBUTE,
+          Constants.SOLUTION_FOR_CREATE_DOCUMENT_ATTRIBUTE));
+    }
+  }
+
+  /**
+   * Method to get Custom Attribute.
+   */
+  private Optional<DocumentAttribute> getCustomAttribute(
+      final RepositoryConfiguration.FieldMapping fieldMapping) {
+    if (com.amazonaws.util.StringUtils.isNullOrEmpty(this.customMetadata
+        .get(fieldMapping.getDataSourceFieldName()))) {
+      return Optional.empty();
+    }
+    if (fieldMapping.getIndexFieldType().equals(RepositoryConfiguration
+        .IndexFieldType.DATE)) {
+      DateFormat originalFormat = new SimpleDateFormat(TIMESTAMP, Locale.ENGLISH);
+      Date customDate = null;
+      StringBuilder dateValues = new StringBuilder();
+      boolean isFirst = Boolean.TRUE;
+      String date = this.customMetadata.get(fieldMapping.getDataSourceFieldName());
+      if (Objects.nonNull(date)) {
+        for (String date1 : date.split(METADATA_LIST_SEPARATOR)) {
+          try {
+            customDate = originalFormat.parse(date1);
+          } catch (ParseException e) {
+            log.warn("Cannot parse requested value : {} to Date",
+                this.customMetadata.get(fieldMapping.getDataSourceFieldName()));
+          }
+          DateFormat dateFormat = new SimpleDateFormat(fieldMapping.getDateFieldFormat());
+          dateFormat.setTimeZone(TimeZone.getTimeZone(TIMEZONE));
+          if (isFirst) {
+            isFirst = Boolean.FALSE;
+          } else {
+            dateValues.append(COMMA);
+          }
+          if (Objects.nonNull(customDate)) {
+            dateValues.append(dateFormat.format(customDate));
+          }
+        }
+      }
+      return Optional.ofNullable(new DocumentAttribute().withKey(fieldMapping.getIndexFieldName())
+          .withValue(createDocumentAttributeValue(fieldMapping,
+              dateValues.toString())));
+    }
+    return Optional.ofNullable(new DocumentAttribute().withKey(fieldMapping.getIndexFieldName())
+        .withValue(createDocumentAttributeValue(fieldMapping,
+            this.customMetadata.get(fieldMapping.getDataSourceFieldName()))));
+  }
+
+  @Override
+  public List<Principal> getPrincipals() {
+    return this.principals;
+  }
+  
+  private String getChangeDetectionTokenString() {
+    String lastModified = String.valueOf(this.aemAssetLastModified);
+    String principals = this.principals.stream().map(p -> p.getName())
+        .collect(Collectors.joining());
+    return CommonUtil.getShaHash(lastModified + principals);
+  }
+}
