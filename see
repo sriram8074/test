@@ -1,0 +1,25 @@
+/**
+   * Method to validate Patterns.
+   * @param patterns input parameter.
+   * @param text     input parameter.
+   * @return list of valid patterns
+   */
+  public List<String> getValidPatterns(final List<String> patterns,
+                                       final String text) {
+    List<String> finalPatterns = new ArrayList<>();
+    if (!CollectionUtils.isNullOrEmpty(patterns)) {
+      patterns.forEach(patternValue -> {
+        boolean isMatched = Boolean.FALSE;
+        Pattern pattern = Pattern.compile(patternValue);
+        //QFIX - Where is PatternSyntaxException is handled.
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+          isMatched = Boolean.TRUE;
+        }
+        if (isMatched) {
+          finalPatterns.add(patternValue);//QFIX where are the exception thrown by this method handled?
+        }
+      });
+    }
+    return finalPatterns;
+  }
