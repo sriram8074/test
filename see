@@ -1,25 +1,30 @@
-/**
-   * Method to validate Patterns.
-   * @param patterns input parameter.
-   * @param text     input parameter.
-   * @return list of valid patterns
-   */
-  public List<String> getValidPatterns(final List<String> patterns,
-                                       final String text) {
-    List<String> finalPatterns = new ArrayList<>();
-    if (!CollectionUtils.isNullOrEmpty(patterns)) {
-      patterns.forEach(patternValue -> {
-        boolean isMatched = Boolean.FALSE;
-        Pattern pattern = Pattern.compile(patternValue);
-        //QFIX - Where is PatternSyntaxException is handled.
-        Matcher matcher = pattern.matcher(text);
-        if (matcher.find()) {
-          isMatched = Boolean.TRUE;
-        }
-        if (isMatched) {
-          finalPatterns.add(patternValue);//QFIX where are the exception thrown by this method handled?
-        }
-      });
+private Optional<Item> buildTicketCommentItem(ItemInfo itemInfo, Ticket ticket, Zendesk zendesk) {
+    if (Objects.nonNull(ticket)) {
+      List<Optional<Item>> list = new ArrayList<>();
+      Long commentId =
+          Long.parseLong(itemInfo.getMetadata().get(ZendeskItemMetadata.ZENDESK_TICKET_COMMENT_ID));
+      //QFIX - where is NumberFormatException arising from parseLong is handled?
+      try {
+        Iterable<Comment> ticketComments = this.ticketCommentService
+            .getTicketCommentsByTicketId(ticket.getId(), this.zendesk, this.zendeskService);
+        zendeskService.executeServiceCallsWithRetry(() -> {
+          ticketComments.forEach(comment -> {
+            if (comment.getId().equals(commentId)) {
+              list.add(ticketCommentItem(itemInfo, ticket, comment, zendesk));
+            }
+          });
+          return null;
+        });
+        return list.get(0);
+      } catch (Exception exception) {
+        //QFIX - Below log should be visible to customer.
+        appLog.error("[{}] - An exception has occurred while getting "
+                + "ticket comments of ticket ID:{}, {}",
+            StackTraceLogger.getUuid(), ticket.getId(), exception.getMessage(), exception);
+        ExceptionHandler.handleInternalServerException(exception, Boolean.TRUE);
+        return Optional.empty();
+      }
+    } else {
+      return Optional.empty();
     }
-    return finalPatterns;
   }
